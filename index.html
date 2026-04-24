@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MediScan Pro · AI Medicine Scanner</title>
+    <style>
+        :root {
+            --white: #ffffff;
+            --blue-50: #eff6ff;
+            --blue-100: #dbeafe;
+            --blue-200: #bfdbfe;
+            --blue-400: #60a5fa;
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
+            --blue-700: #1d4ed8;
+            --green-50: #f0fdf4;
+            --green-100: #dcfce7;
+            --green-500: #22c55e;
+            --green-600: #16a34a;
+            --red-50: #fef2f2;
+            --red-100: #fee2e2;
+            --red-500: #ef4444;
+            --amber-50: #fffbeb;
+            --amber-100: #fef3c7;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --radius-sm: 8px; --radius: 12px; --radius-md: 16px;
+            --radius-lg: 20px; --radius-xl: 24px; --radius-full: 9999px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #e8ecf1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .phone-frame {
+            width: 100%;
+            max-width: 420px;
+            height: 92vh;
+            max-height: 880px;
+            background: var(--white);
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2), 0 0 0 6px #1a1a2e, 0 0 0 8px #2d2d44;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .status-bar {
+            background: var(--white); padding: 12px 24px 6px;
+            display: flex; justify-content: space-between;
+            font-size: 12px; font-weight: 600; color: var(--gray-800);
+            flex-shrink: 0; border-bottom: 1px solid var(--gray-100);
+        }
+        .app-header {
+            background: var(--white); padding: 10px 20px 12px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 20px;
+        }
+        .logo-text { font-size: 20px; font-weight: 700; color: var(--gray-800); }
+        .logo-text span { color: var(--blue-600); }
+        .disclaimer-banner {
+            background: #fef9e7; border-bottom: 2px solid #f9e79f;
+            padding: 8px 14px; font-size: 10px; font-weight: 500;
+            color: #7d6608; text-align: center; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .main-content { flex: 1; overflow-y: auto; background: var(--gray-50); }
+        .screen { display: none; padding: 16px; animation: fadeSlide 0.3s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(10px); } }
+
+        .greeting { font-size: 13px; color: var(--gray-500); margin-bottom: 2px; }
+        .greeting-name { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
+
+        .search-container { position: relative; margin-bottom: 14px; }
+        .search-input {
+            width: 100%; padding: 12px 44px; border: 2px solid var(--blue-100);
+            border-radius: var(--radius-full); font-size: 14px; background: var(--white);
+            outline: none;
+        }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--gray-400); }
+        .search-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray-400); display: none; }
+        .search-clear.visible { display: block; }
+        .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--white); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); margin-top: 6px; z-index: 30; max-height: 200px; overflow-y: auto; display: none; }
+        .search-dropdown.active { display: block; }
+        .search-item { padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--gray-50); }
+
+        .btn { padding: 10px 18px; border-radius: var(--radius-full); font-size: 13px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: var(--blue-600); color: white; }
+        .btn-outline { background: var(--white); border: 2px solid var(--blue-300); color: var(--blue-700); }
+
+        .camera-container { background: #000; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px; position: relative; }
+        #cameraFeed { width: 100%; height: 250px; object-fit: cover; display: block; }
+        .snap-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.9); border: 4px solid var(--blue-600); cursor: pointer; }
+        .preview-img { width: 100%; max-height: 200px; object-fit: contain; border-radius: var(--radius); }
+        .detail-card { background: var(--white); border-radius: var(--radius-xl); padding: 20px; box-shadow: var(--shadow-lg); }
+        .warning-section { background: var(--red-50); border: 1.5px solid var(--red-100); border-radius: var(--radius-md); padding: 14px; margin-top: 14px; }
+        .disclaimer-inline { background: #fdf2e9; border-left: 4px solid #e67e22; padding: 10px 14px; border-radius: var(--radius-sm); margin-top: 14px; font-size: 12px; color: #7d6608; }
+
+        .history-item { background: var(--white); border-radius: var(--radius-md); padding: 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; box-shadow: var(--shadow-sm); }
+        .bottom-nav { background: var(--white); display: flex; justify-content: space-around; padding: 8px 8px 14px; border-top: 1px solid var(--gray-100); flex-shrink: 0; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; border: none; background: transparent; color: var(--gray-400); font-size: 10px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-full); }
+        .nav-item.active { color: var(--blue-600); font-weight: 700; }
+        .nav-item.active::before { content: ''; position: absolute; top: -8px; width: 24px; height: 3px; background: var(--blue-600); border-radius: 0 0 4px 4px; }
+
+        .toast { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: white; padding: 10px 20px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; z-index: 100; opacity: 0; transition: 0.3s; }
+        .toast.show { opacity: 1; }
+        .halal-badge { background: var(--green-50); border: 1px solid var(--green-100); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--green-600); }
+        .safety-chip { padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 12px; }
+        .safety-safe { background: #dcfce7; color: #166534; }
+        .safety-caution { background: #fef3c7; color: #92400e; }
+    </style>
+</head>
+<body>
+<div class="phone-frame">
+    <div class="status-bar"><span>9:41</span><span>📶 📡 🔋</span></div>
+    <div class="app-header">
+        <div class="logo-area"><div class="logo-icon">💊</div><div class="logo-text">Medi<span>Scan</span></div></div>
+    </div>
+    <div class="disclaimer-banner">
+        ⚕️ <strong>Medical Disclaimer:</strong> This app provides general information only and is not a substitute for professional medical advice. Always consult your healthcare provider before taking any medication.
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <!-- Home Screen -->
+        <div class="screen active" id="homeScreen">
+            <p class="greeting">Good morning 👋</p>
+            <p class="greeting-name">Identify any medicine instantly</p>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Type any medicine name..." autocomplete="off">
+                <button class="search-clear" id="searchClear">✕</button>
+                <div class="search-dropdown" id="searchDropdown"></div>
+            </div>
+            <div class="camera-container" id="cameraContainer" style="display:none;">
+                <video id="cameraFeed" autoplay playsinline></video>
+                <button class="snap-btn" id="snapBtn">📸</button>
+            </div>
+            <canvas id="snapCanvas" style="display:none;"></canvas>
+            <div id="scanPreview" style="display:none; margin-bottom:16px;">
+                <img class="preview-img" id="previewImg" alt="Captured">
+                <div id="ocrStatus" style="margin-top:8px; font-size:13px; color:var(--blue-600);"></div>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+                <button class="btn btn-primary" id="openCameraBtn">📷 Open Camera</button>
+                <button class="btn btn-outline" id="galleryUploadBtn">🖼️ Upload Photo</button>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display:none;">
+            <div id="scanResultArea" style="display:none;"></div>
+            <div class="quick-actions" style="display:flex; gap:10px; margin:16px 0;">
+                <div class="history-item" style="flex:1; justify-content:center;" onclick="navigateTo('history')">📋 History</div>
+                <div class="history-item" style="flex:1; justify-content:center;" onclick="showToast('⏰ Reminders coming')">⏰ Reminders</div>
+            </div>
+            <div class="section-title">📌 Recent Scans</div>
+            <div id="recentScansList"></div>
+        </div>
+
+        <!-- Detail Screen -->
+        <div class="screen" id="detailScreen">
+            <button class="btn btn-outline" style="margin-bottom:14px;" onclick="navigateTo('home')">← Back</button>
+            <div id="detailContent"></div>
+            <div class="disclaimer-inline">
+                ⚕️ <strong>Medical Disclaimer:</strong> This information is for educational purposes only.
+            </div>
+        </div>
+
+        <!-- History Screen -->
+        <div class="screen" id="historyScreen">
+            <p class="greeting-name">📋 Scan History</p>
+            <div id="historyList"></div>
+            <button class="btn btn-outline" style="margin-top:12px;" onclick="navigateTo('home')">← Back</button>
+        </div>
+
+        <!-- Profile Screen -->
+        <div class="screen" id="profileScreen">
+            <div style="background:white; border-radius:var(--radius-xl); padding:20px; text-align:center;">
+                <div style="font-size:50px;">👤</div><h3>Sarah Johnson</h3><p>sarah.j@email.com</p>
+            </div>
+            <div style="margin-top:12px; background:white; border-radius:var(--radius-xl); overflow:hidden;">
+                <div class="history-item" onclick="showToast('Notifications')"><span>🔔 Notifications</span><span>›</span></div>
+                <div class="history-item" onclick="showToast('Language: English')"><span>🌐 Language</span><span>›</span></div>
+                <div class="history-item" onclick="showToast('MediScan Pro v2.2')"><span>ℹ️ About</span><span>›</span></div>
+            </div>
+            <button class="btn btn-outline" style="margin-top:12px;" onclick="navigateTo('home')">← Back</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-screen="home">🏠 Home</button>
+        <button class="nav-item" data-screen="history">📋 History</button>
+        <button class="nav-item" data-screen="profile">👤 Profile</button>
+    </nav>
+    <div class="toast" id="toast"></div>
+</div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+    (() => {
+        // Local database (WHO EML subset)
+        const localDB = {
+            'paracetamol': { id:'paracetamol', name:'Paracetamol 500mg', generic:'Acetaminophen', purpose:'Pain relief and fever reduction', dosage:'500mg–1g every 4–6 hours; max 4g/day', timing:'With food, every 4-6 hours', instruction:'Swallow whole with water.', warnings:['Do not exceed 4g/day','Avoid alcohol'], halal: true },
+            'ibuprofen': { id:'ibuprofen', name:'Ibuprofen 400mg', generic:'Ibuprofen', purpose:'Anti-inflammatory', dosage:'200–400mg every 6-8 hours', timing:'With food', instruction:'Swallow whole.', warnings:['Stomach bleeding risk'], halal: true },
+            'amoxicillin': { id:'amoxicillin', name:'Amoxicillin 500mg', generic:'Amoxicillin', purpose:'Bacterial infections', dosage:'500mg every 8 hours', timing:'Complete full course', instruction:'Swallow capsule.', warnings:['Allergy risk','Complete course'], halal: true },
+            'metformin': { id:'metformin', name:'Metformin 500mg', generic:'Metformin', purpose:'Diabetes', dosage:'500mg twice daily', timing:'With meals', instruction:'Swallow whole.', warnings:['Lactic acidosis risk'], halal: true },
+            'cetirizine': { id:'cetirizine', name:'Cetirizine 10mg', generic:'Cetirizine', purpose:'Allergy', dosage:'10mg once daily', timing:'Evening', instruction:'Swallow.', warnings:['Drowsiness'], halal: true },
+            'aspirin': { id:'aspirin', name:'Aspirin 100mg', generic:'Acetylsalicylic acid', purpose:'Pain relief, antiplatelet', dosage:'100–300mg daily', timing:'With food', instruction:'Swallow.', warnings:['Bleeding risk'], halal: true }
+        };
+
+        let scanHistory = [];
+        const screens = {
+            home: document.getElementById('homeScreen'),
+            detail: document.getElementById('detailScreen'),
+            history: document.getElementById('historyScreen'),
+            profile: document.getElementById('profileScreen')
+        };
+        const detailContent = document.getElementById('detailContent');
+        const recentScansList = document.getElementById('recentScansList');
+        const historyList = document.getElementById('historyList');
+        const searchInput = document.getElementById('searchInput');
+        const searchDropdown = document.getElementById('searchDropdown');
+        const searchClear = document.getElementById('searchClear');
+        const fileInput = document.getElementById('fileInput');
+        const cameraContainer = document.getElementById('cameraContainer');
+        const cameraFeed = document.getElementById('cameraFeed');
+        const snapBtn = document.getElementById('snapBtn');
+        const scanPreview = document.getElementById('scanPreview');
+        const previewImg = document.getElementById('previewImg');
+        const ocrStatus = document.getElementById('ocrStatus');
+        const scanResultArea = document.getElementById('scanResultArea');
+        const toast = document.getElementById('toast');
+        let currentScreen = 'home';
+        let stream = null;
+
+        window.showToast = (msg) => {
+            toast.textContent = msg; toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2200);
+        };
+
+        function setActiveScreen(name) {
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+            screens[name].classList.add('active');
+            currentScreen = name;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const nav = document.querySelector(`.nav-item[data-screen="${name}"]`);
+            if (nav) nav.classList.add('active');
+            document.getElementById('mainContent').scrollTop = 0;
+            if (name === 'history') renderHistory();
+            if (name === 'home') renderRecentScans();
+        }
+        window.navigateTo = setActiveScreen;
+
+        // Camera handling
+        async function openCamera() {
+            if (stream) {
+                stopCamera();
+            }
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                cameraFeed.srcObject = stream;
+                cameraContainer.style.display = 'block';
+                scanPreview.style.display = 'none';
+                scanResultArea.style.display = 'none';
+            } catch (err) {
+                window.showToast('Camera access denied. Upload a photo instead.');
+                console.error(err);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            cameraContainer.style.display = 'none';
+        }
+
+        document.getElementById('openCameraBtn').addEventListener('click', openCamera);
+        document.getElementById('galleryUploadBtn').addEventListener('click', () => {
+            stopCamera();
+            fileInput.click();
+        });
+
+        snapBtn.addEventListener('click', () => {
+            const canvas = document.getElementById('snapCanvas');
+            canvas.width = cameraFeed.videoWidth;
+            canvas.height = cameraFeed.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(cameraFeed, 0, 0);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            previewImg.src = dataUrl;
+            scanPreview.style.display = 'block';
+            stopCamera();
+            processImage(dataUrl);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                previewImg.src = ev.target.result;
+                scanPreview.style.display = 'block';
+                stopCamera();
+                processImage(ev.target.result);
+            };
+            reader.readAsDataURL(file);
+            fileInput.value = '';
+        });
+
+        // OCR processing
+        async function processImage(imageDataUrl) {
+            ocrStatus.textContent = '🔍 Scanning with AI OCR...';
+            scanResultArea.style.display = 'none';
+            try {
+                const { data: { text } } = await Tesseract.recognize(imageDataUrl, 'eng', {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            ocrStatus.textContent = `Processing: ${Math.round(m.progress*100)}%`;
+                        }
+                    }
+                });
+                ocrStatus.textContent = '✅ OCR complete';
+                const extracted = text.trim();
+                const drug = detectDrugFromText(extracted);
+                if (drug) {
+                    await lookupDrug(drug);
+                } else {
+                    scanResultArea.innerHTML = `<p style="color:red;">❌ No known medicine detected. Try a clearer image or search manually.</p>`;
+                    scanResultArea.style.display = 'block';
+                }
+            } catch (err) {
+                ocrStatus.textContent = '❌ OCR failed. Try another image.';
+                console.error(err);
+            }
+        }
+
+        function detectDrugFromText(text) {
+            const lower = text.toLowerCase();
+            // Check local DB first
+            for (const [id, med] of Object.entries(localDB)) {
+                if (lower.includes(med.name.toLowerCase()) || lower.includes(med.generic.toLowerCase())) {
+                    return med.name;
+                }
+            }
+            // If not found, extract potential drug name (first meaningful phrase)
+            const match = text.match(/([A-Za-z]+\s*\d*\s*(?:mg|tablet|capsule)?)/i);
+            if (match) {
+                return match[0].trim();
+            }
+            return null;
+        }
+
+        async function lookupDrug(drugName) {
+            window.showToast('🔍 Looking up global database...');
+            try {
+                const response = await fetch(`https://api.fda.gov/drug/label.json?search=openfda.brand_name:"${encodeURIComponent(drugName)}"&limit=1`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.results?.length) {
+                        const label = data.results[0];
+                        const openfda = label.openfda || {};
+                        const med = {
+                            name: openfda.brand_name?.[0] || drugName,
+                            generic: openfda.generic_name?.[0] || '',
+                            purpose: cleanHTML(label.indications_and_usage?.[0] || 'See label'),
+                            dosage: cleanHTML(label.dosage_and_administration?.[0] || 'See label'),
+                            sideEffects: cleanHTML(label.adverse_reactions?.[0] || 'See label'),
+                            warnings: extractWarnings(label),
+                            halal: checkHalal(openfda.generic_name?.[0] || ''),
+                            safety: evaluateSafety(label)
+                        };
+                        displayScanResult(med, true);
+                        return;
+                    }
+                }
+                // fallback local
+                const local = findLocal(drugName);
+                if (local) {
+                    const med = {
+                        name: local.name,
+                        generic: local.generic,
+                        purpose: local.purpose,
+                        dosage: local.dosage,
+                        sideEffects: 'No specific side effects listed.',
+                        warnings: local.warnings,
+                        halal: local.halal,
+                        safety: 'Generally safe when used as directed.'
+                    };
+                    displayScanResult(med, false);
+                } else {
+                    scanResultArea.innerHTML = `<p>❌ Could not find information for "${drugName}". Try search.</p>`;
+                    scanResultArea.style.display = 'block';
+                }
+            } catch (e) {
+                window.showToast('Network error, showing local data if available.');
+                const local = findLocal(drugName);
+                if (local) {
+                    const med = {
+                        name: local.name,
+                        generic: local.generic,
+                        purpose: local.purpose,
+                        dosage: local.dosage,
+                        sideEffects: 'See warnings.',
+                        warnings: local.warnings,
+                        halal: local.halal,
+                        safety: 'Generally safe.'
+                    };
+                    displayScanResult(med, false);
+                }
+            }
+        }
+
+        function findLocal(name) {
+            const lower = name.toLowerCase();
+            return Object.values(localDB).find(m => m.name.toLowerCase().includes(lower) || m.generic.toLowerCase().includes(lower));
+        }
+
+        function cleanHTML(str) { return str?.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() || 'Not specified'; }
+        function extractWarnings(label) {
+            const w = [];
+            if(label.boxed_warning?.[0]) w.push('⚠️ BOXED WARNING: ' + cleanHTML(label.boxed_warning[0]).substring(0,150));
+            if(label.warnings_and_cautions?.[0]) w.push(cleanHTML(label.warnings_and_cautions[0]).substring(0,200));
+            return w.length ? w : ['No specific warnings.'];
+        }
+        function checkHalal(generic) {
+            const nonHalal = ['gelatin', 'stearate', 'alcohol'];
+            return !nonHalal.some(ing => generic?.toLowerCase().includes(ing));
+        }
+        function evaluateSafety(label) {
+            const boxed = label.boxed_warning?.[0];
+            if (boxed) return 'Caution: boxed warning present';
+            return 'Safe for general use under medical guidance';
+        }
+
+        function displayScanResult(med, isFDA) {
+            const halalText = med.halal ? '✅ Halal' : '❌ Not verified halal';
+            const safetyLevel = med.safety?.toLowerCase().includes('caution') ? 'caution' : 'safe';
+            scanResultArea.innerHTML = `
+                <div class="detail-card" style="margin-bottom:16px;">
+                    <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+                        <div style="font-size:36px;">💊</div>
+                        <div>
+                            <h3>${med.name}</h3>
+                            <p style="color:var(--gray-500);">${med.generic}</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-bottom:12px;">
+                        <span class="${safetyLevel==='safe'?'safety-safe':'safety-caution'} safety-chip">🛡️ ${med.safety}</span>
+                        <span class="halal-badge">${halalText}</span>
+                    </div>
+                    <p><strong>🎯 Purpose:</strong> ${med.purpose}</p>
+                    <p><strong>💊 Dosage:</strong> ${med.dosage}</p>
+                    <p><strong>⚠️ Side Effects:</strong> ${med.sideEffects}</p>
+                    ${med.warnings?.length ? `<div class="warning-section"><h4>Warnings</h4><ul>${med.warnings.map(w=>`<li>${w}</li>`).join('')}</ul></div>` : ''}
+                    <div style="margin-top:14px; display:flex; gap:8px;">
+                        <button class="btn btn-primary btn-sm" id="downloadPdfBtn">📄 Download PDF</button>
+                        <button class="btn btn-outline btn-sm" id="showDetailBtn">🔍 Full Details</button>
+                    </div>
+                </div>
+            `;
+            scanResultArea.style.display = 'block';
+            document.getElementById('downloadPdfBtn').addEventListener('click', () => generatePDF(med));
+            document.getElementById('showDetailBtn').addEventListener('click', () => {
+                setActiveScreen('detail');
+                detailContent.innerHTML = createDetailHTMLFromScan(med);
+            });
+            addToHistory({ id: med.name.toLowerCase().replace(/\s/g,'_'), name: med.name, purpose: med.purpose });
+            renderRecentScans();
+        }
+
+        function createDetailHTMLFromScan(med) {
+            return `
+                <div class="detail-card">
+                    <h2>${med.name}</h2>
+                    <p style="color:var(--gray-500);">${med.generic}</p>
+                    <p><strong>Purpose:</strong> ${med.purpose}</p>
+                    <p><strong>Dosage:</strong> ${med.dosage}</p>
+                    <p><strong>Side Effects:</strong> ${med.sideEffects}</p>
+                    <div class="warning-section"><h4>Warnings</h4><ul>${med.warnings.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+                </div>
+            `;
+        }
+
+        function generatePDF(med) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(18);
+            doc.text('Medicine Report - MediScan', 20, 20);
+            doc.setFontSize(14);
+            doc.text(`Name: ${med.name}`, 20, 40);
+            doc.text(`Generic: ${med.generic}`, 20, 50);
+            doc.text(`Purpose: ${med.purpose}`, 20, 60);
+            doc.text(`Dosage: ${med.dosage}`, 20, 70);
+            doc.text(`Safety: ${med.safety}`, 20, 80);
+            doc.text(`Halal: ${med.halal ? 'Yes' : 'Not verified'}`, 20, 90);
+            doc.text('Warnings:', 20, 100);
+            med.warnings.forEach((w, i) => doc.text(`- ${w}`, 25, 110 + i*10));
+            doc.save(`${med.name.replace(/\s/g,'_')}_report.pdf`);
+        }
+
+        function addToHistory(med) {
+            if (!scanHistory.find(h => h.id === med.id)) {
+                scanHistory.unshift({ id: med.id, date: new Date().toISOString().slice(0,10), name: med.name, purpose: med.purpose });
+                if (scanHistory.length > 10) scanHistory.pop();
+            }
+        }
+
+        function renderRecentScans() {
+            if (!recentScansList) return;
+            recentScansList.innerHTML = scanHistory.slice(0,3).map(h => `
+                <div class="history-item" data-id="${h.id}">
+                    <span>💊</span><div><strong>${h.name}</strong><p>${h.purpose}</p></div>
+                </div>`).join('');
+            document.querySelectorAll('#recentScansList .history-item').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = card.dataset.id;
+                    const local = Object.values(localDB).find(m => m.id === id);
+                    if (local) {
+                        setActiveScreen('detail');
+                        detailContent.innerHTML = createDetailHTML(local);
+                    } else {
+                        window.showToast('Search globally for this medicine.');
+                    }
+                });
+            });
+        }
+
+        function renderHistory() {
+            if (!historyList) return;
+            historyList.innerHTML = scanHistory.map(h => `
+                <div class="history-item" data-id="${h.id}">
+                    <span>💊</span><div><strong>${h.name}</strong><p>${h.purpose} · ${h.date}</p></div>
+                </div>`).join('');
+            document.querySelectorAll('#historyList .history-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.dataset.id;
+                    const local = Object.values(localDB).find(m => m.id === id);
+                    if (local) {
+                        setActiveScreen('detail');
+                        detailContent.innerHTML = createDetailHTML(local);
+                    }
+                });
+            });
+        }
+
+        function createDetailHTML(med) {
+            return `
+                <div class="detail-card">
+                    <h2>${med.name}</h2>
+                    <p style="color:var(--gray-500);">${med.generic}</p>
+                    <p><strong>Purpose:</strong> ${med.purpose}</p>
+                    <p><strong>Dosage:</strong> ${med.dosage}</p>
+                    <p><strong>Timing:</strong> ${med.timing}</p>
+                    <div class="warning-section"><h4>Warnings</h4><ul>${med.warnings.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+                </div>
+            `;
+        }
+
+        // Search bar
+        searchInput.addEventListener('input', () => {
+            const val = searchInput.value;
+            searchClear.classList.toggle('visible', val.length > 0);
+            if (val.length > 1) {
+                const matches = Object.values(localDB).filter(m => m.name.toLowerCase().includes(val.toLowerCase()) || m.generic.toLowerCase().includes(val.toLowerCase()));
+                searchDropdown.innerHTML = matches.map(m => `<div class="search-item" data-id="${m.id}">💊 ${m.name} (${m.generic})</div>`).join('');
+                searchDropdown.classList.toggle('active', matches.length > 0);
+            } else searchDropdown.classList.remove('active');
+        });
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const query = searchInput.value.trim();
+                if (!query) return;
+                searchDropdown.classList.remove('active');
+                const local = findLocal(query);
+                if (local) {
+                    setActiveScreen('detail');
+                    detailContent.innerHTML = createDetailHTML(local);
+                } else {
+                    lookupDrug(query);
+                }
+            }
+        });
+        searchDropdown.addEventListener('click', (e) => {
+            const item = e.target.closest('.search-item');
+            if (item) {
+                const id = item.dataset.id;
+                searchInput.value = localDB[id]?.name || '';
+                searchDropdown.classList.remove('active');
+                setActiveScreen('detail');
+                detailContent.innerHTML = createDetailHTML(localDB[id]);
+            }
+        });
+        searchClear.addEventListener('click', () => { searchInput.value = ''; searchClear.classList.remove('visible'); searchDropdown.classList.remove('active'); });
+        document.addEventListener('click', (e) => { if (!e.target.closest('.search-container')) searchDropdown.classList.remove('active'); });
+
+        // Bottom nav
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                setActiveScreen(item.dataset.screen);
+                if (item.dataset.screen === 'home') stopCamera();
+            });
+        });
+
+        // Init
+        scanHistory.push({ id:'paracetamol', date:'2025-04-20', name:'Paracetamol 500mg', purpose:'Pain relief' });
+        scanHistory.push({ id:'cetirizine', date:'2025-04-18', name:'Cetirizine 10mg', purpose:'Allergy' });
+        renderRecentScans();
+    })();
+</script>
+</body>
+</html>
